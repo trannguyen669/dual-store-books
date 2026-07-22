@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dual-books-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: books_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - dual_books_postgres_data:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:7
+    container_name: dual-books-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - dual_books_mongo_data:/data/db
+
+volumes:
+  dual_books_postgres_data:
+  dual_books_mongo_data:
