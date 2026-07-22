@@ -19,7 +19,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         host: configService.get<string>('POSTGRES_HOST', 'localhost'),
         port: Number(configService.get<string>('POSTGRES_PORT', '5432')),
         username: configService.get<string>('POSTGRES_USER', 'postgres'),
-        password: configService.get<string>('POSTGRES_PASSWORD', 'pass'),
+        password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB', 'books_db'),
         autoLoadEntities: true,
         synchronize: configService.get<string>('TYPEORM_SYNC', 'true') === 'true',
@@ -29,10 +29,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>(
-          'MONGO_URI',
-          'mongodb://localhost:27017/books_db',
-        ),
+        uri: configService.getOrThrow<string>('MONGO_URI'),
       }),
     }),
 

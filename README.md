@@ -22,7 +22,7 @@ docker compose up -d
 
 `docker-compose.yml` tạo hai service:
 
-- PostgreSQL: `localhost:5432`, database `books_db`, user `postgres`, password `pass`
+- PostgreSQL: `localhost:5432`, database `books_db`, user `postgres`, password lấy từ file `.env` local
 - MongoDB: `localhost:27017`, database `books_db`
 
 ## Cài Đặt Và Chạy App
@@ -60,7 +60,7 @@ TypeOrmModule.forRootAsync({
     host: configService.get<string>('POSTGRES_HOST', 'localhost'),
     port: Number(configService.get<string>('POSTGRES_PORT', '5432')),
     username: configService.get<string>('POSTGRES_USER', 'postgres'),
-    password: configService.get<string>('POSTGRES_PASSWORD', 'pass'),
+    password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
     database: configService.get<string>('POSTGRES_DB', 'books_db'),
     autoLoadEntities: true,
     synchronize: configService.get<string>('TYPEORM_SYNC', 'true') === 'true',
@@ -70,10 +70,7 @@ TypeOrmModule.forRootAsync({
 MongooseModule.forRootAsync({
   inject: [ConfigService],
   useFactory: (configService: ConfigService) => ({
-    uri: configService.get<string>(
-      'MONGO_URI',
-      'mongodb://localhost:27017/books_db',
-    ),
+    uri: configService.getOrThrow<string>('MONGO_URI'),
   }),
 })
 ```
@@ -84,10 +81,10 @@ File `.env` dùng khi chạy local và không commit lên Git. File `.env.exampl
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=pass
+POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=books_db
 TYPEORM_SYNC=true
-MONGO_URI=mongodb://localhost:27017/books_db
+MONGO_URI=your_mongodb_connection_string
 ```
 
 ## Data Model
