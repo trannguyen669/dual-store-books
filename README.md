@@ -29,6 +29,7 @@ docker compose up -d
 
 ```bash
 npm install
+copy .env.example .env
 npm run start:dev
 ```
 
@@ -42,23 +43,51 @@ http://localhost:3000
 
 Kết nối được khai báo trong `AppModule`:
 
-- TypeORM PostgreSQL: `src/app.module.ts:10`
-- Mongoose MongoDB: `src/app.module.ts:21`
-- `BooksModule`: `src/app.module.ts:23`
+- `ConfigModule`: `src/app.module.ts:10`
+- TypeORM PostgreSQL: `src/app.module.ts:14`
+- Mongoose MongoDB: `src/app.module.ts:31`
+- `BooksModule`: `src/app.module.ts:42`
 
 ```ts
-TypeOrmModule.forRoot({
-  type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'pass',
-  database: 'books_db',
-  autoLoadEntities: true,
-  synchronize: true,
+ConfigModule.forRoot({
+  isGlobal: true,
 })
 
-MongooseModule.forRoot('mongodb://localhost:27017/books_db')
+TypeOrmModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (configService: ConfigService) => ({
+    type: 'postgres',
+    host: configService.get<string>('POSTGRES_HOST', 'localhost'),
+    port: Number(configService.get<string>('POSTGRES_PORT', '5432')),
+    username: configService.get<string>('POSTGRES_USER', 'postgres'),
+    password: configService.get<string>('POSTGRES_PASSWORD', 'pass'),
+    database: configService.get<string>('POSTGRES_DB', 'books_db'),
+    autoLoadEntities: true,
+    synchronize: configService.get<string>('TYPEORM_SYNC', 'true') === 'true',
+  }),
+})
+
+MongooseModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (configService: ConfigService) => ({
+    uri: configService.get<string>(
+      'MONGO_URI',
+      'mongodb://localhost:27017/books_db',
+    ),
+  }),
+})
+```
+
+File `.env` dùng khi chạy local và không commit lên Git. File `.env.example` được commit để người khác biết các biến môi trường cần khai báo:
+
+```env
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=pass
+POSTGRES_DB=books_db
+TYPEORM_SYNC=true
+MONGO_URI=mongodb://localhost:27017/books_db
 ```
 
 ## Data Model

@@ -4,23 +4,39 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BooksModule } from './books/books.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'pass',
-      database: 'books_db',
-      autoLoadEntities: true,
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
 
-    MongooseModule.forRoot('mongodb://localhost:27017/books_db'),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('POSTGRES_HOST', 'localhost'),
+        port: Number(configService.get<string>('POSTGRES_PORT', '5432')),
+        username: configService.get<string>('POSTGRES_USER', 'postgres'),
+        password: configService.get<string>('POSTGRES_PASSWORD', 'pass'),
+        database: configService.get<string>('POSTGRES_DB', 'books_db'),
+        autoLoadEntities: true,
+        synchronize: configService.get<string>('TYPEORM_SYNC', 'true') === 'true',
+      }),
+    }),
 
-    BooksModule
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>(
+          'MONGO_URI',
+          'mongodb://localhost:27017/books_db',
+        ),
+      }),
+    }),
+
+    BooksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
